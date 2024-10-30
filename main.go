@@ -29,6 +29,9 @@ var (
 )
 
 func main() {
+	
+	// Initialize the alerting system
+	InitAlerting()
 	// HTTP endpoint to receive sensor data
 	http.HandleFunc("/sensor", receiveSensorData)
 
