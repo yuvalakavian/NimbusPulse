@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/spf13/viper"
 )
 
 // SensorData holds environmental data from a sensor
@@ -29,7 +30,12 @@ var (
 )
 
 func main() {
-	
+	viper.SetConfigName("config")
+	viper.AddConfigPath(".")
+	err := viper.ReadInConfig()
+	if err != nil {
+		panic(err)
+	}
 	// Initialize the alerting system
 	InitAlerting()
 	// HTTP endpoint to receive sensor data

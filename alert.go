@@ -3,11 +3,11 @@ package main
 import (
 	"fmt"
 	"log"
-	"net/smtp"
-	"os"
 	"time"
 
-	"gopkg.in/yaml.v3"
+	"github.com/spf13/viper"
+	"github.com/twilio/twilio-go"
+	twilioApi "github.com/twilio/twilio-go/rest/api/v2010"
 )
 
 // Define threshold values for temperature and humidity
@@ -16,28 +16,33 @@ const (
 	HumidityThreshold = 70.0 // Percentage
 )
 
-// AlertConfig holds configuration for sending alerts
+// AlertConfig holds configuration for sending SMS alerts
 type AlertConfig struct {
-	Email      string
-	SMTPServer string
-	SMTPPort   string
-	Username   string
-	Password   string
+	TwilioClient   *twilio.RestClient
+	FromNumber     string
+	ToNumber       string
+	CooldownPeriod time.Duration
 }
+
+// Map to track the last alert time for each sensor to prevent duplicate alerts
+var lastAlertTime = make(map[string]time.Time)
 
 // InitAlerting initializes the alerting system
 func InitAlerting() {
-	var alertConfig AlertConfig
-	yamlFile, err := os.ReadFile("conf.yaml")
-	if err != nil {
-		panic(err)
+	// Twilio configuration
+	twilioClient := twilio.NewRestClientWithParams(twilio.ClientParams{
+		Username: viper.GetString("TWILIO_ACCOUNT_SID"),
+		Password: viper.GetString("TWILIO_AUTH_TOKEN"),
+	})
+
+	alertConfig := AlertConfig{
+		TwilioClient:   twilioClient,
+		FromNumber:     viper.GetString("TWILIO_FROM_NUMBER"),
+		ToNumber:       viper.GetString("TWILIO_TO_NUMBER"),
+		CooldownPeriod: 10 * time.Minute, // Set to 10 minutes
 	}
 
-	err = yaml.Unmarshal(yamlFile, &alertConfig)
-	if err != nil {
-		panic(err)
-	}
-
+	// Initialize the alerting system
 	go monitorSensorData(alertConfig)
 }
 
@@ -55,29 +60,42 @@ func monitorSensorData(config AlertConfig) {
 		latestData := sensorDataStore[len(sensorDataStore)-1]
 		storeMutex.Unlock()
 
+		// Check temperature threshold
 		if latestData.Temp > TempThreshold {
 			msg := fmt.Sprintf("High Temperature Alert! Sensor ID: %s, Temperature: %.2f°C", latestData.ID, latestData.Temp)
-			sendAlert(config, "Temperature Alert", msg)
+			checkAndSendAlert(config, latestData.ID+"_temperature", msg)
 		}
 
+		// Check humidity threshold
 		if latestData.Humidity > HumidityThreshold {
 			msg := fmt.Sprintf("High Humidity Alert! Sensor ID: %s, Humidity: %.2f%%", latestData.ID, latestData.Humidity)
-			sendAlert(config, "Humidity Alert", msg)
+			checkAndSendAlert(config, latestData.ID+"_humidity", msg)
 		}
 	}
 }
 
-// sendAlert sends an email notification using SMTP
-func sendAlert(config AlertConfig, subject, body string) {
-	auth := smtp.PlainAuth("", config.Username, config.Password, config.SMTPServer)
-	msg := []byte("To: " + config.Email + "\r\n" +
-		"Subject: " + subject + "\r\n" +
-		"\r\n" + body + "\r\n")
-
-	err := smtp.SendMail(config.SMTPServer+":"+config.SMTPPort, auth, config.Username, []string{config.Email}, msg)
-	if err != nil {
-		log.Printf("Failed to send alert: %v\n", err)
+// checkAndSendAlert checks the cooldown period before sending an SMS alert
+func checkAndSendAlert(config AlertConfig, alertKey, message string) {
+	lastSent, exists := lastAlertTime[alertKey]
+	if !exists || time.Since(lastSent) > config.CooldownPeriod {
+		sendAlert(config, message)
+		lastAlertTime[alertKey] = time.Now()
 	} else {
-		log.Printf("Alert sent: %s\n", body)
+		log.Printf("Skipped alert for %s: cooldown period active.\n", alertKey)
+	}
+}
+
+// sendAlert sends an SMS notification using Twilio
+func sendAlert(config AlertConfig, body string) {
+	_, err := config.TwilioClient.Api.CreateMessage(&twilioApi.CreateMessageParams{
+		From: &config.FromNumber,
+		To:   &config.ToNumber,
+		Body: &body,
+	})
+
+	if err != nil {
+		log.Printf("Failed to send SMS alert: %v\n", err)
+	} else {
+		log.Printf("SMS Alert sent: %s\n", body)
 	}
 }
