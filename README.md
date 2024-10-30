@@ -90,7 +90,8 @@ A WebSocket endpoint that streams real-time data to clients.
 Here are some ideas for expanding the project:
 
 - **Persistent Storage**: Integrate with a time-series database like InfluxDB to store historical sensor data.
-- **Alerting System**: Configure threshold-based alerts (e.g., high temperature warnings) and send notifications via email, SMS, or push notifications. :white_check_mark: 
+- **Alerting System**: Configure threshold-based alerts (e.g., high temperature warnings) and send notifications via email, SMS, or push notifications. :white_check_mark:
+  ![image](https://github.com/user-attachments/assets/07497014-f303-4633-a05f-e11f7051b165)
 - **Dashboard**: Build a frontend dashboard to visualize real-time and historical data using JavaScript libraries like Chart.js or D3.js.
 - **Support Additional Sensors**: Add support for more environmental metrics (e.g., CO₂ levels, air quality).
   
