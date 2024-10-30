@@ -18,7 +18,6 @@
 
 - **`main.go`**: Main server setup, HTTP and WebSocket endpoints.
 - **`sensor.go`**: Manages sensor data storage and parsing.
-- **`ws.go`**: Handles WebSocket connections.
 
 ## Getting Started
 
