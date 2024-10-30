@@ -66,6 +66,8 @@
        console.log("Real-time data:", event.data);
    };
    ```
+   ![image](https://github.com/user-attachments/assets/c9293675-7a73-4920-a870-09460fbd2b8e)
+
 
 ## API Endpoints
 
