@@ -1,7 +1,3 @@
-Here’s an updated README with the project repo name as **NimbusPulse**.
-
----
-
 # NimbusPulse
 
 **NimbusPulse** is a real-time environmental monitoring system built with Go, leveraging WebSocket for live data streaming and HTTP for sensor data ingestion. This project serves as a foundation for expanding into a full IoT solution, tracking environmental metrics such as temperature and humidity in real-time.
