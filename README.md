@@ -17,7 +17,7 @@
 ## Project Structure
 
 - **`main.go`**: Main server setup, HTTP and WebSocket endpoints.
-- **`sensor.go`**: Manages sensor data storage and parsing.
+- **`alert.go`**: Manages alert system including sms notification.
 
 ## Getting Started
 
